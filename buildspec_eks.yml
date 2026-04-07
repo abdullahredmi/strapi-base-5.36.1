@@ -1,0 +1,42 @@
+version: 0.2
+run-as: root
+
+phases:
+  install:
+    commands:
+      - echo "Installing kubectl..."
+      - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.32.0/2024-05-09/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl
+      - export PATH=$PATH:$HOME/bin
+      - echo "export PATH=$PATH:$HOME/bin" >> ~/.bashrc
+      - kubectl version --client
+      - echo "Updating kubeconfig for EKS..."
+      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name aeseks-prod
+
+  pre_build:
+    commands:
+      - echo "Setting ECR repository URI..."
+      - REPOSITORY_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME"
+      - export REPOSITORY_URI
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - echo "Logging in to Docker Hub..."
+      - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - echo "Getting CodeArtifact auth token..."
+
+  build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -f $DOC_FILE -t $IMAGE_REPO_NAME .
+      - echo "Tagging Docker image with ECR repository URI..."
+      - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:latest
+
+  post_build:
+    commands:
+      - echo "Updating kubeconfig for EKS..."
+      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name aeseks-prod
+      - echo "Pushing image to ECR with :latest tag..."
+      - docker push "$REPOSITORY_URI:latest"
+      - echo "Restarting deployment in EKS..."
+      - kubectl rollout restart deployment $DEPLOY_NAME -n $IMAGE_REPO_NAME

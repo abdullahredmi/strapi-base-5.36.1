@@ -1,0 +1,37 @@
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache build-base postgresql-client gcc autoconf automake zlib-dev libpng-dev vips-dev git > /dev/null 2>&1
+
+WORKDIR /opt/app
+
+# Create necessary directories and set permissions
+RUN mkdir -p /opt/app/public/uploads && \
+    mkdir -p /opt/app/node_modules && \
+    mkdir -p /opt/app/patches && \
+    chown -R node:node /opt/app
+
+# Switch to non-root user for security
+USER node
+
+# Copy package files with correct ownership
+COPY --chown=node:node package*.json ./
+
+COPY --chown=node:node patches/* ./patches/
+
+# copy env file
+COPY --chown=node:node .env.development .env
+
+# Install dependencies
+RUN npm install -f
+
+# Copy application files with correct ownership
+COPY --chown=node:node . .
+
+# Build the Strapi application
+RUN npm run build
+
+# Expose the application port (default Strapi port is 1337)
+EXPOSE 1337
+
+CMD ["npm", "run", "start"] 
