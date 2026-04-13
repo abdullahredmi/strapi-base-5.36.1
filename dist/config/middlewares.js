@@ -16,13 +16,9 @@ exports.default = [
     {
         name: 'strapi::cors',
         config: {
-            enabled: true,
             origin: [
                 'http://localhost:3000',
                 'http://localhost:8000',
-                'https://dev-api.adityaeducationalsociety.org',
-                'https://adityaeducationalsociety.org',
-                'https://stage.adityaeducationalsociety.org'
             ],
             methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
             headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
