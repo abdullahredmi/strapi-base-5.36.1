@@ -9,7 +9,8 @@ export default ({ env }) => {
     password: env('DATABASE_PASSWORD'),
     schema: env('DATABASE_SCHEMA', 'public'),
     ssl: {
-      rejectUnauthorized: false, require: true
+      rejectUnauthorized: false,
+      ca: require('fs').readFileSync('./config/prod-ca-2021.crt').toString()
     }
   };
 
