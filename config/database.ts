@@ -9,7 +9,7 @@ export default ({ env }) => {
     password: env('DATABASE_PASSWORD'),
     schema: env('DATABASE_SCHEMA', 'public'),
     ssl: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false, require: true
     }
   };
 
@@ -19,7 +19,12 @@ export default ({ env }) => {
     connection: {
       client: env('DATABASE_CLIENT', 'postgres'),
       connection,
-      pool: { min: 2, max: 5 },
+      pool: {
+        min: 0,
+        max: 5,
+        idleTimeoutMillis: 30000,
+        acquireTimeoutMillis: 60000
+      }
     },
   };
 };
