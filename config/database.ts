@@ -8,7 +8,7 @@ export default ({ env }) => {
     user: env(isProd ? 'DATABASE_USERNAME' : 'DATABASE_USERNAME'),
     password: env(isProd ? 'DATABASE_PASSWORD' : 'DATABASE_PASSWORD'),
     schema: env('DATABASE_SCHEMA', 'public'),
-    ssl: false
+    ssl: {rejectUnauthorized: false}
   };
 
   console.log(`🚀 Using ${isProd ? 'PROD' : 'DEV'} DB: ${connection.database}`);
